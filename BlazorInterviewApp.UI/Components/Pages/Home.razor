@@ -1,0 +1,37 @@
+﻿@page "/"
+
+<h1>Welcome to the Home Page!</h1>
+
+@inject HttpClient Http
+@inject NavigationManager Nav
+@code {
+    List<string> myTickets = new(); 
+    bool isLoading = true; 
+    string? errorMessage; 
+    protected override async Task OnInitializedAsync() { 
+        try { isLoading = true;
+            Http.BaseAddress = new Uri(Nav.BaseUri);
+            myTickets = await Http.GetFromJsonAsync<List<string>>("/tickets")
+                        ?? new List<string>();
+        } 
+        catch (Exception ex) { 
+            errorMessage = ex.Message; 
+        } 
+        finally { 
+            isLoading = false; 
+        } 
+    } 
+} 
+
+@if (isLoading) { 
+    <p>Loading...</p> 
+} 
+else if (errorMessage != null)
+{
+    <p>@errorMessage</p>
+} 
+else { 
+    <TicketList Tickets=@myTickets /> 
+}
+
+

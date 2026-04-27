@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="BlazorInterviewApp.Api/BlazorInterviewApp.Api.csproj" Id="eb92f660-84e3-4455-90de-908e654d5219" />
+  <Project Path="BlazorInterviewApp.UI/BlazorInterviewApp.UI.csproj" Id="aa65bd49-6431-4b17-b0a7-c635c2acd9e7" />
+</Solution>

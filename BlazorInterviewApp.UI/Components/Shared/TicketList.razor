@@ -1,0 +1,11 @@
+﻿
+
+@code {
+    [Parameter]
+    public List<string>? Tickets { get; set; } = new List<string>();
+}
+
+@foreach (var ticket in Tickets)
+{
+    <p>@ticket</p>
+}

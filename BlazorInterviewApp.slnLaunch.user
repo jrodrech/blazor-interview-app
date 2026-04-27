@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "BlazorInterviewApp.Api\\BlazorInterviewApp.Api.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "BlazorInterviewApp.UI\\BlazorInterviewApp.UI.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
