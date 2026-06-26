@@ -1,26 +1,85 @@
 ﻿@page "/"
+@rendermode InteractiveServer
+@using BlazorInterviewApp.UI.DTOs
+@using BlazorInterviewApp.UI.Shared
 
 <h1>Welcome to the Home Page!</h1>
 
 @inject HttpClient Http
 @inject NavigationManager Nav
+
 @code {
-    List<string> myTickets = new(); 
+    List<TicketResponse> myTickets = new();
     bool isLoading = true; 
-    string? errorMessage; 
-    protected override async Task OnInitializedAsync() { 
-        try { isLoading = true;
+    string? errorMessage;
+    string searchText = "";
+    TicketSortOption selectedSort = TicketSortOption.Newest;
+
+    int TotalTickets => myTickets.Count;
+
+    int OpenTickets =>
+        myTickets.Count(t => t.Status == TicketStatus.Open);
+
+    int InProgressTickets =>
+        myTickets.Count(t => t.Status == TicketStatus.InProgress);
+
+    int ClosedTickets =>
+        myTickets.Count(t => t.Status == TicketStatus.Closed);
+
+    List<TicketResponse> filteredTickets
+    {
+        get
+        {
+            var query = myTickets.Where(t =>
+                string.IsNullOrWhiteSpace(searchText)
+                || t.Title.Contains(searchText, StringComparison.OrdinalIgnoreCase)
+                || t.Description.Contains(searchText, StringComparison.OrdinalIgnoreCase)
+                || t.CustomerName.Contains(searchText, StringComparison.OrdinalIgnoreCase));
+
+            query = selectedSort switch
+            {
+                TicketSortOption.Newest =>
+                    query.OrderByDescending(t => t.CreatedAt),
+
+                TicketSortOption.Oldest =>
+                    query.OrderBy(t => t.CreatedAt),
+
+                TicketSortOption.Priority =>
+                    query.OrderByDescending(t => t.Priority),
+
+                TicketSortOption.Status =>
+                    query.OrderBy(t => t.Status),
+
+                _ =>
+                    query
+            };
+
+            return query.ToList();
+        }
+    }
+
+    protected override async Task OnInitializedAsync() 
+    {       
             Http.BaseAddress = new Uri(Nav.BaseUri);
-            myTickets = await Http.GetFromJsonAsync<List<string>>("/tickets")
-                        ?? new List<string>();
-        } 
-        catch (Exception ex) { 
-            errorMessage = ex.Message; 
-        } 
-        finally { 
-            isLoading = false; 
-        } 
-    } 
+            await LoadTickets();
+    }
+
+    async Task LoadTickets()
+    { 
+        try {
+            isLoading = true;
+            myTickets = await Http.GetFromJsonAsync<List<TicketResponse>>("/tickets")
+                        ?? new();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
 } 
 
 @if (isLoading) { 
@@ -30,8 +89,68 @@ else if (errorMessage != null)
 {
     <p>@errorMessage</p>
 } 
-else { 
-    <TicketList Tickets=@myTickets /> 
+else {
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Total</h5>
+                    <h3>@TotalTickets</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Open</h5>
+                    <h3>@OpenTickets</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card">
+                <div class="card-body">
+                    <h5>In Progress</h5>
+                    <h3>@InProgressTickets</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Closed</h5>
+                    <h3>@ClosedTickets</h3>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="row mb-3 g-2">
+        <div class="col-auto flex-grow-1">
+            <label class="form-label">Search</label>
+            <input class="form-control"
+                   placeholder="Search tickets..."
+                   @bind="searchText"
+                   @bind:event="oninput" />
+        </div>
+        <div class="col-auto">
+            <label class="form-label">Sort By</label>
+            <select class="form-select"
+                    style="max-width:250px"
+                    @bind="selectedSort">
+
+                @foreach (var option in Enum.GetValues<TicketSortOption>())
+                {
+                    <option value="@option">@option</option>
+                }
+
+            </select>
+        </div>
+    </div>
+    <TicketList Tickets=@filteredTickets TicketsChanged="LoadTickets" /> 
 }
 
 

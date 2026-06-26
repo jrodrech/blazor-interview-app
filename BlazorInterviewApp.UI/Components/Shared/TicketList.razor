@@ -1,11 +1,134 @@
-﻿
+﻿@rendermode InteractiveServer
+@inject HttpClient Http
+@inject NavigationManager Nav
+@using BlazorInterviewApp.UI.Shared
+@using BlazorInterviewApp.UI.DTOs
+@using System.Linq
+
 
 @code {
     [Parameter]
-    public List<string>? Tickets { get; set; } = new List<string>();
+    public List<TicketResponse>? Tickets { get; set; } = new List<TicketResponse>();
+    
+    [Parameter]
+    public EventCallback TicketsChanged { get; set; }
+
+    async Task DeleteTicket(int id)
+    {
+        var url = $"{Nav.BaseUri}tickets/{id}";
+        await Http.DeleteAsync(url);
+
+        var Tickets = await Http.GetFromJsonAsync<List<TicketResponse>>("/tickets")
+                  ?? new();
+        await TicketsChanged.InvokeAsync();
+    }
+
+    async Task UpdateStatus(TicketResponse ticket, string? value)
+    {
+        if (Enum.TryParse<TicketStatus>(value, out var status))
+        {
+            ticket.Status = status;
+            await SaveTicket(ticket);
+            await TicketsChanged.InvokeAsync();
+        }
+    }
+
+    async Task UpdatePriority(TicketResponse ticket, string? value)
+    {
+        if (Enum.TryParse<TicketPriority>(value, out var priority))
+        {
+            ticket.Priority = priority;
+            await SaveTicket(ticket);
+            await TicketsChanged.InvokeAsync();
+        }
+    }
+
+    async Task SaveTicket(TicketResponse ticket)
+    {
+        var url = $"{Nav.BaseUri}tickets/{ticket.Id}";
+        var updateRequest = new TicketUpdateRequest
+        {
+            Status = ticket.Status,
+            Priority = ticket.Priority
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Patch, url);
+        request.Content = JsonContent.Create(updateRequest);
+        await Http.SendAsync(request);
+    }
+
+    string GetStatusClass(TicketStatus status)
+    {
+        return status switch
+        {
+            TicketStatus.Open => "bg-warning",
+            TicketStatus.InProgress => "bg-primary",
+            TicketStatus.Closed => "bg-success",
+            _ => "bg-secondary"
+        };
+    }
+
+    string GetPriorityClass(TicketPriority priority)
+    {
+        return priority switch
+        {
+            TicketPriority.Low => "bg-success",
+            TicketPriority.Medium => "bg-warning",
+            TicketPriority.High => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
 }
 
-@foreach (var ticket in Tickets)
-{
-    <p>@ticket</p>
-}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Title</th>
+            <th>Customer</th>
+            <th>Status</th>
+            <th>Priority</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var ticket in Tickets)
+        {
+            <tr>
+                <td>@ticket.Id</td>
+                <td>@ticket.Title</td>
+                <td>@ticket.CustomerName</td>
+                <td>
+                    <span class="badge @GetStatusClass(ticket.Status)">
+                        @(new string(ticket.Status.ToString().Where(char.IsUpper).ToArray()))
+                    </span>
+                    <select value="@ticket.Status"
+                        @onchange="async e => await UpdateStatus(ticket, e.Value?.ToString())">
+                        @foreach (var status in Enum.GetValues<TicketStatus>())
+                        {
+                            <option value="@status">@status</option>
+                        }
+                    </select>
+                </td>
+                <td>
+                    <span class="badge @GetPriorityClass(ticket.Priority)">
+                        @(new string(ticket.Priority.ToString().Where(char.IsUpper).ToArray()))
+                    </span>
+                    <select value="@ticket.Priority"
+                        @onchange="async e => await UpdatePriority(ticket, e.Value?.ToString())">
+                        @foreach (var priority in Enum.GetValues<TicketPriority>())
+                        {
+                            <option value="@priority">@priority</option>
+                        }
+                    </select>
+                </td>
+                <td><button class="btn btn-danger btn-sm"
+                            @onclick="() => DeleteTicket(ticket.Id)">
+                        Delete
+                    </button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

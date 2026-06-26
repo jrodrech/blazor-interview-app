@@ -1,0 +1,51 @@
+﻿@page "/create-ticket"
+@rendermode InteractiveServer
+@using BlazorInterviewApp.UI.DTOs
+@using System.ComponentModel.DataAnnotations
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<h3>Create Ticket</h3>
+
+<EditForm Model="@ticket"  OnValidSubmit="Save"  FormName="CreateTicketForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="mb-2">
+        <label>Title</label>
+        <InputText class="form-control" @bind-Value="ticket.Title" />
+    </div>
+    <ValidationMessage For="() => ticket.Title" />
+    <div class="mb-2">
+        <label>Description</label>
+        <InputText class="form-control" @bind-Value="ticket.Description" />
+    </div>
+    <ValidationMessage For="() => ticket.Description" />
+
+    <div class="mb-2">
+        <label>Customer</label>
+        <InputText class="form-control" @bind-Value="ticket.CustomerName" />
+    </div>
+    <ValidationMessage For="() => ticket.CustomerName" />
+
+    <div class="mb-2">
+        <label>Priority</label>
+        <InputSelect class="form-control" @bind-Value="ticket.Priority">
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+        </InputSelect>
+    </div>
+
+    <button class="btn btn-primary">Save</button>
+</EditForm>
+
+@code {
+    TicketCreateRequest ticket = new();
+
+    async Task Save()
+    {
+        Http.BaseAddress = new Uri(Nav.BaseUri);
+        await Http.PostAsJsonAsync("/tickets", ticket);
+        Nav.NavigateTo("/");
+    }
+}
