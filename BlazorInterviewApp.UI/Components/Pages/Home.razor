@@ -68,7 +68,7 @@
     { 
         try {
             isLoading = true;
-            myTickets = await Http.GetFromJsonAsync<List<TicketResponse>>("/tickets")
+            myTickets = await Http.GetFromJsonAsync<List<TicketResponse>>("/api/tickets")
                         ?? new();
         }
         catch (Exception ex)

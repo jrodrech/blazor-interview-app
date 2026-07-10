@@ -12,4 +12,6 @@ public interface ITicketService
     Task<bool> DeleteAsync(int id);
 
     Task<TicketResponse?> UpdateAsync(int id, TicketUpdateRequest updated);
+    
+    Task<TicketDetailsResponse?> GetByIdAsync(int id);
 }

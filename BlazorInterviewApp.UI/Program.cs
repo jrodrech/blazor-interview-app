@@ -69,17 +69,17 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-app.MapGet("/tickets", async (ITicketService service) =>
+app.MapGet("/api/tickets", async (ITicketService service) =>
 {
     return await service.GetAllAsync();
 });
-app.MapPost("/tickets", async (TicketCreateRequest ticket, ITicketService service) =>
+app.MapPost("/api/tickets", async (TicketCreateRequest ticket, ITicketService service) =>
 {
     var created = await service.CreateAsync(ticket);
 
-    return Results.Created($"/tickets/{created.Id}", created);
+    return Results.Created($"/api/tickets/{created.Id}", created);
 });
-app.MapDelete("/tickets/{id:int}", async (int id, ITicketService service) =>
+app.MapDelete("/api/tickets/{id:int}", async (int id, ITicketService service) =>
 {
     var deleted = await service.DeleteAsync(id);
 
@@ -87,7 +87,7 @@ app.MapDelete("/tickets/{id:int}", async (int id, ITicketService service) =>
         ? Results.NoContent()
         : Results.NotFound();
 });
-app.MapPatch("/tickets/{id:int}", async (int id, TicketUpdateRequest updated, ITicketService service) =>
+app.MapPatch("/api/tickets/{id:int}", async (int id, TicketUpdateRequest updated, ITicketService service) =>
 {
     var ticket = await service.UpdateAsync(id, updated);
 
@@ -96,5 +96,14 @@ app.MapPatch("/tickets/{id:int}", async (int id, TicketUpdateRequest updated, IT
         : Results.NotFound();
 });
 
+app.MapGet("/api/tickets/{id:int}",
+    async (int id, ITicketService service) =>
+    {
+        var ticket = await service.GetByIdAsync(id);
+
+        return ticket is null
+            ? Results.NotFound()
+            : Results.Ok(ticket);
+    });
 
 app.Run();

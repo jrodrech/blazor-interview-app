@@ -1,0 +1,93 @@
+﻿@page "/tickets/{Id:int}"
+@rendermode InteractiveServer
+@using BlazorInterviewApp.UI.DTOs
+
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    TicketDetailsResponse? ticket;
+    bool isLoading = true;
+    string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Http.BaseAddress = new Uri(Nav.BaseUri);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+
+            ticket = await Http.GetFromJsonAsync<TicketDetailsResponse>(
+                $"/api/tickets/{Id}");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
+
+@if (isLoading)
+{
+    <p>Loading ticket...</p>
+}
+else if (errorMessage is not null)
+{
+    <div class="alert alert-danger">
+        @errorMessage
+    </div>
+}
+else if (ticket is null)
+{
+    <div class="alert alert-warning">
+        Ticket not found.
+    </div>
+}
+else
+{
+    <h3>@ticket.Title</h3>
+
+    <dl class="row">
+
+        <dt class="col-sm-3">Customer</dt>
+        <dd class="col-sm-9">@ticket.CustomerName</dd>
+
+        <dt class="col-sm-3">Assigned To</dt>
+        <dd class="col-sm-9">@ticket.AssignedTo</dd>
+
+        <dt class="col-sm-3">Status</dt>
+        <dd class="col-sm-9">@ticket.Status</dd>
+
+        <dt class="col-sm-3">Priority</dt>
+        <dd class="col-sm-9">@ticket.Priority</dd>
+
+        <dt class="col-sm-3">Description</dt>
+        <dd class="col-sm-9">@ticket.Description</dd>
+
+        <dt class="col-sm-3">Created</dt>
+        <dd class="col-sm-9">@ticket.CreatedAt</dd>
+
+        <dt class="col-sm-3">Updated</dt>
+        <dd class="col-sm-9">
+            @(ticket.UpdatedAt?.ToString() ?? "Never")
+        </dd>
+
+    </dl>
+    <button class="btn btn-secondary" 
+        @onclick='() => Nav.NavigateTo("/")'>
+            Back to Dashboard
+    </button>
+
+}
