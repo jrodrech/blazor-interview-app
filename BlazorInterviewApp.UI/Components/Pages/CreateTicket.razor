@@ -45,7 +45,7 @@
     async Task Save()
     {
         Http.BaseAddress = new Uri(Nav.BaseUri);
-        await Http.PostAsJsonAsync("/tickets", ticket);
+        await Http.PostAsJsonAsync("/api/tickets", ticket);
         Nav.NavigateTo("/");
     }
 }

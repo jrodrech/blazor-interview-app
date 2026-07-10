@@ -98,4 +98,23 @@ public class TicketService : ITicketService
             AssignedTo = ticket.AssignedTo
         };
     }
+
+    public async Task<TicketDetailsResponse?> GetByIdAsync(int id)
+    {
+        return await _db.Tickets
+            .Where(t => t.Id == id)
+            .Select(t => new TicketDetailsResponse
+            {
+                Id = t.Id,
+                Title = t.Title,
+                Description = t.Description,
+                Status = t.Status,
+                Priority = t.Priority,
+                CreatedAt = t.CreatedAt,
+                UpdatedAt = t.UpdatedAt,
+                CustomerName = t.CustomerName,
+                AssignedTo = t.AssignedTo
+            })
+            .FirstOrDefaultAsync();
+    }
 }
